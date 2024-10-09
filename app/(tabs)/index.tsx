@@ -1,70 +1,139 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { TProducts, useProducts } from "@/hooks/useProducts";
+import { useState } from "react";
+import {
+  View,
+  Text,
+  SafeAreaView,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 
 export default function HomeScreen() {
+  const { products, addProduct, deleteProductById, updateProductById } =
+    useProducts();
+  const [name, setName] = useState("");
+  const [type, setType] = useState("");
+  const [price, setPrice] = useState(0);
+  const [product, setProduct] = useState<TProducts | undefined>(undefined);
+  const createProduct = async () => {
+    if (product) {
+      await updateProductById({ _id: product._id, name, type, price });
+    } else {
+      await addProduct({ name, type, price });
+    }
+    setName("");
+    setType("");
+    setPrice(0);
+    setProduct(undefined);
+  };
+
+  const onSelect = (prod: TProducts) => {
+    const { name, price, type, _id } = prod;
+    setName(name);
+    setPrice(price);
+    setType(type);
+    setProduct(prod);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <SafeAreaView
+      style={{
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        margin: 10,
+      }}
+    >
+      <Text style={{ fontSize: 30, fontWeight: "bold" }}>Product Data</Text>
+      <View
+        style={{
+          flexDirection: "column",
+          gap: 20,
+          marginTop: 20,
+          width: "100%",
+        }}
+      >
+        <TextInput
+          placeholder="Enter product name"
+          style={{
+            borderWidth: 1,
+            padding: 10,
+            width: "100%",
+            borderRadius: 20,
+          }}
+          value={name}
+          onChangeText={(text) => setName(text)}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <TextInput
+          placeholder="Enter product type"
+          style={{
+            borderWidth: 1,
+            padding: 10,
+            width: "100%",
+            borderRadius: 20,
+          }}
+          value={type}
+          onChangeText={(text) => setType(text)}
+        />
+        <TextInput
+          placeholder="Enter product price"
+          style={{
+            borderWidth: 1,
+            padding: 10,
+            width: "100%",
+            borderRadius: 20,
+          }}
+          value={price.toString()}
+          keyboardType="numeric"
+          onChangeText={(text) => setPrice(Number(text))}
+        />
+        <TouchableOpacity
+          style={{ backgroundColor: "black", padding: 10, borderRadius: 20 }}
+          onPress={createProduct}
+        >
+          <Text
+            style={{ color: "white", textAlign: "center", fontWeight: "bold" }}
+          >
+            {product ? "Update Product" : "Add Product"}
+          </Text>
+        </TouchableOpacity>
+
+        <ScrollView style={{ flexDirection: "column", gap: 20 }}>
+          {products.map((product) => (
+            <View
+              style={{ borderWidth: 1, borderRadius: 20, padding: 10 }}
+              key={product._id}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text style={{ fontWeight: "bold", fontSize: 25 }}>
+                  {product.name}
+                </Text>
+                <View style={{ flexDirection: "row", gap: 20 }}>
+                  <View style={{ flexDirection: "column", gap: 5 }}>
+                    <Text>{product.type}</Text>
+                    <Text>{product.price} đ</Text>
+                  </View>
+                  <View style={{ flexDirection: "column", gap: 5 }}>
+                    <Text onPress={() => onSelect(product)}>Edit</Text>
+                    <Text
+                      style={{ color: "red" }}
+                      onPress={() => deleteProductById(product._id ?? "")}
+                    >
+                      Delete
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
